@@ -22,7 +22,7 @@ func (r *MySQLRepository) Save(shipping *domain.Shipping) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := `INSERT INTO shipping (idUser, idProduct, quantity, created_at) VALUES (?, ?, ?, ?)`
+	query := `INSERT INTO shipping (idUser, idProduct, quantity) VALUES (?, ?, ?)`
 	
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -30,8 +30,7 @@ func (r *MySQLRepository) Save(shipping *domain.Shipping) error {
 	}
 	defer stmt.Close()
 
-	now := time.Now()
-	result, err := stmt.ExecContext(ctx, shipping.IdUser, shipping.IdProduct, shipping.Quantity, now)
+	result, err := stmt.ExecContext(ctx, shipping.IdUser, shipping.IdProduct, shipping.Quantity)
 	if err != nil {
 		return fmt.Errorf("error guardando shipping: %v", err)
 	}
@@ -42,7 +41,6 @@ func (r *MySQLRepository) Save(shipping *domain.Shipping) error {
 	}
 
 	shipping.ID = id
-	shipping.CreatedAt = now
 	return nil
 }
 
@@ -50,7 +48,7 @@ func (r *MySQLRepository) GetByID(id int64) (*domain.Shipping, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := `SELECT id, idUser, idProduct, quantity, created_at FROM shipping WHERE id = ?`
+	query := `SELECT id, idUser, idProduct, quantity FROM shipping WHERE id = ?`
 	
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -64,7 +62,6 @@ func (r *MySQLRepository) GetByID(id int64) (*domain.Shipping, error) {
 		&shipping.IdUser,
 		&shipping.IdProduct,
 		&shipping.Quantity,
-		&shipping.CreatedAt,
 	)
 
 	if err == sql.ErrNoRows {
@@ -81,7 +78,7 @@ func (r *MySQLRepository) GetByUserID(userID int64) ([]*domain.Shipping, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	query := `SELECT id, idUser, idProduct, quantity, created_at FROM shipping WHERE idUser = ? ORDER BY created_at DESC`
+	query := `SELECT id, idUser, idProduct, quantity FROM shipping WHERE idUser = ?`
 	
 	stmt, err := r.db.PrepareContext(ctx, query)
 	if err != nil {
@@ -103,7 +100,6 @@ func (r *MySQLRepository) GetByUserID(userID int64) ([]*domain.Shipping, error) 
 			&shipping.IdUser,
 			&shipping.IdProduct,
 			&shipping.Quantity,
-			&shipping.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error escaneando shipping: %v", err)
